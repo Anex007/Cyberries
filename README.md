@@ -1,6 +1,7 @@
 # Cyberries
 A very Simple Botnet made in C. This project Only has a Bot-master for now but adding the Client Side Bot functionality Soon.
 Instead of having a Remote Shell to the bot's machine the botnet is operated by an protocol based interaction.
+Only works in Linux.
 
 ### Uses
 	-> Limited access to Clients machine
