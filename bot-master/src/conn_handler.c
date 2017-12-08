@@ -1,7 +1,7 @@
 #include "conn_handler.h"
 
 extern CONNS cons;
-extern int msg_pipe[2];
+extern char STOPFLAG;
 
 int make_socket(void)
 {
@@ -19,7 +19,6 @@ void *accept_handler(void *arg)
 	int main_sock = *p_main_sock;
 	struct connections *connects = &cons;
 	int client_sock;
-	char msg[7];
 	while(1){
 		int addrlen = sizeof(struct sockaddr);
 		if((client_sock = accept(main_sock, (struct sockaddr *)&connects->client_conn, &addrlen)) != ERROR){
@@ -29,12 +28,11 @@ void *accept_handler(void *arg)
 			connects = connects->next;
 		}
 		// we need a Exit Call Protocol
-		read(msg_pipe[0], msg, 5);
-		if(!strncmp(msg, "EXIT", 5)){
+		if(STOPFLAG){
 			break;
 		}
-		fprintf(stdout, "%s\n", msg);
 	}
+	pthread_exit(0);
 }
 
 void send_to_bots(char *data)
