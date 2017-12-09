@@ -8,6 +8,7 @@ CONNS cons;
 char STOPFLAG = 0;
 pthread_t accept_thread;
 int main_sock;
+struct sockaddr_in serverAddr;
 
 void start()
 {
@@ -40,7 +41,7 @@ void start()
 void init()
 {
 	main_sock = make_socket();
-	bind_socket(main_sock, 15551, "0.0.0.0");
+	bind_socket(main_sock, 15551, &serverAddr);
 	listen(main_sock, 8);
 	pthread_create(&accept_thread, NULL, accept_handler, &main_sock);
 	
@@ -228,6 +229,7 @@ void ls_all_bots()
 	int temp_size;
 
 	while(connects->next != NULL){
+		printf("%d\n", i);
 		if(sendto(connects->sock, "UP?", 3, 0, (struct sockaddr *)&connects->client_conn, sizeof(struct sockaddr)) != -1) {
 			connects = connects->next;
 			continue;

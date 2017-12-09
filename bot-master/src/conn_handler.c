@@ -6,7 +6,7 @@ extern char STOPFLAG;
 int make_socket(void)
 {
 	int s;
-	if((s = socket(AF_INET, SOCK_DGRAM, 0)) == ERROR)	{
+	if((s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == ERROR)	{
 		perror("Failed to create socket");
 		exit(1);
 	}
@@ -39,20 +39,19 @@ void send_to_bots(char *data)
 {
 	struct connections *connects = &cons;
 	while(connects->next != NULL){
-		sendto(connects->sock, data, strlen(data), 0, (struct sockaddr *)&connects->client_conn, sizeof(struct sockaddr));
+		int ret = sendto(connects->sock, data, strlen(data), 0, (struct sockaddr *)&connects->client_conn, sizeof(struct sockaddr));
+		printf("%d\n", ret);
 		connects = connects->next;
 	}
 }
 
-void bind_socket(int sock, short port, char *ip)
+void bind_socket(int sock, short port, struct sockaddr_in *serverAddr)
 {
-	struct sockaddr_in serverAddr;
-
-	serverAddr.sin_family = AF_INET;
-	serverAddr.sin_port = htons(port);
-	serverAddr.sin_addr.s_addr = inet_addr(ip);
-	memset(serverAddr.sin_zero, '\0', sizeof serverAddr.sin_zero);
-	if (bind(sock, (struct sockaddr *)&serverAddr, sizeof(struct sockaddr)) == ERROR){
+	serverAddr->sin_family = AF_INET;
+	serverAddr->sin_port = htons(port);
+	serverAddr->sin_addr.s_addr = htonl(INADDR_ANY);
+	memset(serverAddr->sin_zero, '\x00', sizeof serverAddr->sin_zero);
+	if (bind(sock, (struct sockaddr *)serverAddr, sizeof(struct sockaddr)) == ERROR){
 		perror("Failed to bind the Socket");
 		exit(1);
 	}

@@ -1,5 +1,7 @@
 #ifndef HANDLE_ME
-	#define HANDLE_ME
+
+
+#define HANDLE_ME
 
 
 #include <stdio.h>
@@ -22,7 +24,7 @@
 int make_socket(void);
 void *accept_handler(void *arg);
 void send_to_bots(char *data);
-void bind_socket(int sock, short port, char *ip);
+void bind_socket(int sock, short port, struct sockaddr_in *serverAddr);
 void close_socket(int sock_);
 
 typedef struct connections
