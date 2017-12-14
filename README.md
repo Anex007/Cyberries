@@ -19,5 +19,5 @@ Only works in Linux.
 		-> SlowLoris
 	-> Can only DDOS prebuild types. Not able to use a different DDOS type other than the one defined previously.
 
-##### We need your help to improve and fix the bugs. Thank You. \nHelp us add more types of DDOS scripts.
+##### We need your help to improve and fix the bugs. Thank You. Help us add more types of DDOS scripts.
 
