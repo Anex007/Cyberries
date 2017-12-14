@@ -4,12 +4,12 @@ Only works in Linux.
 
 ### Compilation
 #### Bots
-	```cd bots/src
-	make```
+	cd bots/src
+	make
 
 #### Bot-Master
-	```cd bot-master/src
-	make```
+	cd bot-master/src
+	make
 
 
 ### Uses
