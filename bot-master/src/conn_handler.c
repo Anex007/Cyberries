@@ -42,7 +42,11 @@ void send_to_bots(char *data)
 {
 	struct connections *connects = &cons;
 	while(connects != NULL){
-		int ret = sendto(connects->sock, data, strlen(data)+1, 0, (struct sockaddr *)&connects->client_conn, sizeof(struct sockaddr));
+		int len = strlen(data)+1;
+		len < 60 ? len = 60: 0 ;
+		if((connects->sock)==0)
+			continue;
+		int ret = sendto(connects->sock, data, len, 0, (struct sockaddr *)&connects->client_conn, sizeof(struct sockaddr));
 		// DEBUG
 		printf("%d\n", ret);
 		connects = connects->next;

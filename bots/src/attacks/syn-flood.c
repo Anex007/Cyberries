@@ -174,6 +174,7 @@ void flood_with_syn(char *ip, short port, int thrds, int f_read)
 
   struct thread_data tdata[thrds];
 
+  fprintf(stdout, "Starting the SYN-FLOOD\n");
   int i;
   for(i = 0; i<thrds; i++){
     tdata[i].thread_id = i;
@@ -195,9 +196,6 @@ void flood_with_syn(char *ip, short port, int thrds, int f_read)
 
   for(i = 0; i<thrds; i++){
     pthread_join(threads[i], NULL);
-
-    //DEBUG
-    printf("[%d] Thread joined\n", i);
   }
   printf("All Thread's Exited\n");
   _exit(0);
