@@ -1,11 +1,23 @@
 # Cyberries
-A very Simple Botnet made in C. This project Only has a Bot-master for now but adding the Client Side Bot functionality Soon.
-Instead of having a Remote Shell to the bot's machine the botnet is operated by an protocol based interaction.
+A lightweight Botnet made in C. Safe to use on Client side, because of the lack of Remote Access to the machine.
 Only works in Linux.
+
+### Compilation
+#### Bots
+	```cd bots/src
+	make```
+
+#### Bot-Master
+	```cd bot-master/src
+	make```
+
 
 ### Uses
 	-> Limited access to Clients machine
+	-> Now only supporting
+		-> Syn-Flood
+		-> SlowLoris
 	-> Can only DDOS prebuild types. Not able to use a different DDOS type other than the one defined previously.
 
-##### We need your help to improve and fix the bugs. Thank You.
+##### We need your help to improve and fix the bugs. Thank You. \nHelp us add more types of DDOS scripts.
 
