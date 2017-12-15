@@ -102,16 +102,20 @@ void init(char *to_con, int port)
 void connect_to_master()
 {
 	int bytes;
-	char data_recved[80];
+	char data_recved[81];
 	int type;
-	char target_ip[30];
-	char thrds[4];
-	char s_port[6];
+	char target_ip[31];
+	char thrds[5];
+	char s_port[7];
 	server_size = sizeof(struct sockaddr);
 	while(1){
 		memset(data_recved, 0, 80);
-		bytes = recvfrom(main_sock, data_recved, 80, 0, (struct sockaddr *)&server, &server_size);		
+		memset(target_ip, 0, 30);
+		memset(thrds, 0, 4);
+		memset(s_port, 0, 6);
 
+		bytes = recvfrom(main_sock, data_recved, 80, 0, (struct sockaddr *)&server, &server_size);		
+		
 		if (bytes== ERROR){
 			perror("Unable to recv Data: ");
 			exit(1);
