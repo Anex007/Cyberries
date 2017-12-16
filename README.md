@@ -2,6 +2,8 @@
 A lightweight Botnet made in C. Safe to use on Client side, because of the lack of Remote Access to the machine.
 Only works in Linux.
 
+## NOTE: Fixing some major Bugs right now
+
 ### Compilation
 #### Bots
 	cd bots/src
