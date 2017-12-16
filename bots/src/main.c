@@ -173,7 +173,7 @@ void connect_to_master()
 			strncpy(thrds, i_of_thrds, len_thrds);
 			thrds[len_thrds] = 0;
 			// DEBUG
-			printf("Threads: %s\n", thrds, len_thrds);
+			printf("Threads: %s\n", thrds);
 
 			char *i_of_port = i_of_thrds+len_thrds+1;
 			//int len_port = (index(i_of_thrds+1, (int ) ' ')) - i_of_port;
