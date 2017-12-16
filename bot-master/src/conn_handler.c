@@ -2,7 +2,6 @@
 
 extern CONNS cons;
 extern int main_sock;
-extern char STOPFLAG;
 extern short port;
 
 int make_socket(void)
@@ -30,10 +29,6 @@ void *accept_handler(void)
 		if((connects->sock = accept(main_sock, (struct sockaddr *)&connects->client_conn, &addrlen)) == ERROR){
 			perror("accept failed");
 			continue;
-		}else{
-			if(STOPFLAG){
-				pthread_exit(0);
-			}
 		}
 
 		connects->next = (struct connections *) malloc(sizeof (struct connections));
