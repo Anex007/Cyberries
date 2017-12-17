@@ -2,6 +2,8 @@
 A lightweight Botnet made in C. Safe to use on Client side, because of the lack of Remote Access to the machine.
 Only works in Linux.
 
+## NOTE: Will not be looking into fixing or even changing parts of the code until February
+
 ### Compilation
 #### Bots
 	cd bots/src
@@ -14,7 +16,7 @@ Only works in Linux.
 
 ### How To Use
 #### Bots
-	When asked type in the IP of the bot-master to connect to
+	Type in the IP of the bot-master to connect to inside the bots/src/main.c on page 11 from 127.0.0.1 to that IP. 
 
 #### Bot-Master
 	Make sure to have a WAN ip for the bot's to connect to, or must be in the same network.
